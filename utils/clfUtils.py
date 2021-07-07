@@ -1,15 +1,16 @@
-import numpy as np
 import torch
 from sklearn import metrics
-import matplotlib.pyplot as plt
 from torch.autograd import Variable
 from torch.nn import BCELoss
 
 from utils.batchUtils import generate_batches
 from utils.constants import LOG_INTERVAL
+from pathlib import Path
 
 
-def train(epoch, models, optimizers, trainloader):
+def train(epoch, models, optimizers, train_loader, device):
+    Path("results/custom").mkdir(parents=True, exist_ok=True)
+
     train_losses_circle = []
     train_losses_curve = []
     train_losses_line = []
@@ -27,11 +28,13 @@ def train(epoch, models, optimizers, trainloader):
     curve_model.train()
     line_model.train()
 
-    for batch_idx, (X_batch, y_batch) in enumerate(trainloader):
+    for batch_idx, (X_batch, y_batch) in enumerate(train_loader):
         # normalize X_batch
         X_batch = Variable(X_batch).float()
         # generate y_batch per desired pattern
         y_batch_circle, y_batch_curve, y_batch_line = generate_batches(y_batch)
+        X_batch, y_batch_circle, y_batch_curve, y_batch_line = X_batch.to(device), y_batch_circle.to(
+            device), y_batch_curve.to(device), y_batch_line.to(device)
 
         # train circle model
         optimizer_circle.zero_grad()
@@ -57,24 +60,24 @@ def train(epoch, models, optimizers, trainloader):
         if batch_idx % LOG_INTERVAL == 0:
             print(
                 'Train Epoch: {} [{}/{} ({:.0f}%)] | Circle -> Loss: {:.6f} | Curve -> Loss: {:.6f} | Line -> Loss: {:.6f}'.format(
-                    epoch, batch_idx * len(X_batch), len(trainloader.dataset),
-                           100. * batch_idx / len(trainloader), loss_circle_bin.item(), loss_curve_bin.item(),
+                    epoch, batch_idx * len(X_batch), len(train_loader.dataset),
+                           100. * batch_idx / len(train_loader), loss_circle_bin.item(), loss_curve_bin.item(),
                     loss_line_bin.item()))
             train_losses_circle.append(loss_circle_bin.item())
             train_losses_curve.append(loss_curve_bin.item())
             train_losses_line.append(loss_line_bin.item())
-            train_counter.append((batch_idx * 64) + ((epoch - 1) * len(trainloader.dataset)))
-            torch.save(circle_model.state_dict(), 'results/circle_model.pth')
-            torch.save(optimizer_circle.state_dict(), 'results/optimizer_circle.pth')
-            torch.save(curve_model.state_dict(), 'results/curve_model.pth')
-            torch.save(optimizer_curve.state_dict(), 'results/optimizer_curve.pth')
-            torch.save(line_model.state_dict(), 'results/line_model.pth')
-            torch.save(optimizer_line.state_dict(), 'results/optimizer_line.pth')
+            train_counter.append((batch_idx * 64) + ((epoch - 1) * len(train_loader.dataset)))
+            torch.save(circle_model.state_dict(), 'results/custom/circle_model.pth')
+            # torch.save(optimizer_circle.state_dict(), 'results/custom/optimizer_circle.pth')
+            torch.save(curve_model.state_dict(), 'results/custom/curve_model.pth')
+            # torch.save(optimizer_curve.state_dict(), 'results/custom/optimizer_curve.pth')
+            torch.save(line_model.state_dict(), 'results/custom/line_model.pth')
+            # torch.save(optimizer_line.state_dict(), 'results/custom/optimizer_line.pth')
 
     return [train_losses_circle, train_losses_curve, train_losses_line, train_counter]
 
 
-def test(models, valloader):
+def test(models, train_loader, device):
     circle_model = models['circle_model']
     curve_model = models['curve_model']
     line_model = models['line_model']
@@ -92,11 +95,13 @@ def test(models, valloader):
 
     binary_criterion = BCELoss()
     with torch.no_grad():
-        for X_batch, y_batch in valloader:
+        for X_batch, y_batch in train_loader:
             # normalize X_batch
             X_batch = Variable(X_batch).float()
             # generate y_batch per desired pattern
             y_batch_circle, y_batch_curve, y_batch_line = generate_batches(y_batch)
+            X_batch, y_batch_circle, y_batch_curve, y_batch_line = X_batch.to(device), y_batch_circle.to(
+                device), y_batch_curve.to(device), y_batch_line.to(device)
 
             y_pred_circle = circle_model(X_batch)
             test_loss_circle += binary_criterion(y_pred_circle.reshape(-1), y_batch_circle)
@@ -113,14 +118,16 @@ def test(models, valloader):
             pred_line = y_pred_line.round()
             correct_line += pred_line.eq(y_batch_line.data.view_as(pred_line)).sum()
 
-    test_loss_circle /= len(valloader.dataset)
-    test_loss_curve /= len(valloader.dataset)
-    test_loss_line /= len(valloader.dataset)
+    test_loss_circle /= len(train_loader.dataset)
+    test_loss_curve /= len(train_loader.dataset)
+    test_loss_line /= len(train_loader.dataset)
     print(
-        '\nTest set: | Circle Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%) | Curve Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%) | Line Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-            test_loss_circle, correct_circle, len(valloader.dataset), 100. * correct_circle / len(valloader.dataset),
-            test_loss_curve, correct_curve, len(valloader.dataset), 100. * correct_curve / len(valloader.dataset),
-            test_loss_line, correct_line, len(valloader.dataset), 100. * correct_line / len(valloader.dataset)))
+        '\nTest set: | Circle Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%) | Curve Avg. loss: {:.4f}, Accuracy: {}/{} '
+        '({:.0f}%) | Line Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+            test_loss_circle, correct_circle, len(train_loader.dataset),
+            100. * correct_circle / len(train_loader.dataset),
+            test_loss_curve, correct_curve, len(train_loader.dataset), 100. * correct_curve / len(train_loader.dataset),
+            test_loss_line, correct_line, len(train_loader.dataset), 100. * correct_line / len(train_loader.dataset)))
 
     return [test_loss_circle, test_loss_curve, test_loss_line]
 
@@ -138,16 +145,3 @@ def binary_acc(y_pred, y_test):
 def get_accuracy(y_true, y_pred):
     accuracy = metrics.accuracy_score(y_true, y_pred.reshape(-1).detach().numpy().round())
     return accuracy
-
-
-def view_classify(img, ps, classes):
-    fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
-    ax1.imshow(img.resize_(1, 28, 28).numpy().squeeze())
-    ax1.axis('off')
-    ax2.barh(np.arange(classes), ps)
-    ax2.set_aspect(0.1)
-    ax2.set_yticks(np.arange(classes))
-    ax2.set_yticklabels(np.arange(classes))
-    ax2.set_title('Class Probability')
-    ax2.set_xlim(0, 1.1)
-    plt.tight_layout()
