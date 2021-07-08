@@ -9,7 +9,7 @@ from torchvision import datasets, transforms
 # custom libraries
 from models.CnnModel import BinaryCnnModel
 from utils.clfUtils import test, train
-from utils.image_utils import view_classify, plot_samples
+from utils.imageUtils import view_classify, plot_samples, classify_image
 from utils.constants import RANDOM_SEED, N_EPOCHS, LEARNING_RATE, MOMENTUM, BATCH_SIZE_TRAIN
 
 
@@ -111,20 +111,11 @@ def run_train(args):
         test_losses_curve.append(test_loss_curve)
         test_losses_line.append(test_loss_line)
 
+    torch.save(circle_model.state_dict(), 'results/custom/circle_model.pth')
+    torch.save(curve_model.state_dict(), 'results/custom/curve_model.pth')
+    torch.save(line_model.state_dict(), 'results/custom/line_model.pth')
+
     images, labels = next(iter(test_loader))
 
     img = images[0][None, :, :, :].to(device)
-    with torch.no_grad():
-        logps_circle = circle_model(img)
-        logps_curve = curve_model(img)
-        logps_line = line_model(img)
-
-    probab_circle = list(logps_circle.cpu().numpy()[0])
-    probab_curve = list(logps_curve.cpu().numpy()[0])
-    probab_line = list(logps_line.cpu().numpy()[0])
-    print("Is Circle = ", probab_circle[0] > 0.5)
-    print("Is Curve = ", probab_curve[0] > 0.5)
-    print("Is Line = ", probab_line[0] > 0.5)
-    view_classify(img.view(1, 28, 28).cpu(), [round(1 - probab_circle[0]), round(probab_circle[0])], 2, "Circle")
-    view_classify(img.view(1, 28, 28).cpu(), [round(1 - probab_curve[0]), round(probab_curve[0])], 2, "Curve")
-    view_classify(img.view(1, 28, 28).cpu(), [round(1 - probab_line[0]), round(probab_line[0])], 2, "Line")
+    classify_image(img, circle_model, curve_model, line_model)
