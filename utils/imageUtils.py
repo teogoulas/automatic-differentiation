@@ -60,3 +60,14 @@ def classify_image(img, circle_model, curve_model, line_model):
     view_classify(img.view(1, 28, 28).cpu(), [round(1 - probab_circle[0]), round(probab_circle[0])], 2, "Circle")
     view_classify(img.view(1, 28, 28).cpu(), [round(1 - probab_curve[0]), round(probab_curve[0])], 2, "Curve")
     view_classify(img.view(1, 28, 28).cpu(), [round(1 - probab_line[0]), round(probab_line[0])], 2, "Line")
+
+
+def plot_training_curve(train_counter, train_losses, test_counter, test_losses, model):
+    fig = plt.figure()
+    plt.plot(train_counter, train_losses, color='blue')
+    plt.plot(test_counter, test_losses, color='red')
+    plt.legend(['Train Loss', 'Test Loss'], loc='upper right')
+    plt.xlabel('number of training examples seen')
+    plt.ylabel('negative log likelihood loss')
+    plt.title("{} function Learning Curve".format(model))
+    fig.show()

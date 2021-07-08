@@ -9,7 +9,7 @@ from torchvision import datasets, transforms
 # custom libraries
 from models.CnnModel import BinaryCnnModel
 from utils.clfUtils import test, train
-from utils.imageUtils import view_classify, plot_samples, classify_image
+from utils.imageUtils import view_classify, plot_samples, classify_image, plot_training_curve
 from utils.constants import RANDOM_SEED, N_EPOCHS, LEARNING_RATE, MOMENTUM, BATCH_SIZE_TRAIN
 
 
@@ -94,6 +94,7 @@ def run_train(args):
     test_losses_circle = []
     test_losses_curve = []
     test_losses_line = []
+    test_counter = [i * len(train_loader.dataset) for i in range(args.e__epochs + 1)]
 
     test_loss_circle, test_loss_curve, test_loss_line = test(models, test_loader, device)
     test_losses_circle.append(test_loss_circle)
@@ -114,6 +115,10 @@ def run_train(args):
     torch.save(circle_model.state_dict(), 'results/custom/circle_model.pth')
     torch.save(curve_model.state_dict(), 'results/custom/curve_model.pth')
     torch.save(line_model.state_dict(), 'results/custom/line_model.pth')
+
+    plot_training_curve(train_counter, train_losses_circle, test_counter, test_losses_circle, "Circle")
+    plot_training_curve(train_counter, train_losses_curve, test_counter, test_losses_curve, "Curve")
+    plot_training_curve(train_counter, train_losses_line, test_counter, test_losses_line, "Line")
 
     images, labels = next(iter(test_loader))
 
