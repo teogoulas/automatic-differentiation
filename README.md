@@ -31,6 +31,12 @@ Upon pressing `Save` the drawn shape will be evaluated by the functions and the 
     1. `-c`/ `--custom`: If this flag is present the custom trained functions will be loaded for evaluation. 
     Note that `python3 main.py train` command should have already executed, or else the test process will be terminated 
     with an error message. At any other case the pre-trained functions will be used.
+    
+* `python3 main.py evaluate`: Plots confusion matrix for either user-trained or pre-trained functions
+    Just one argument is defined for the `test` command:  
+    1. `-c`/ `--custom`: If this flag is present confusion matrix for the custom trained functions will be plotted. 
+    Note that `python3 main.py train` command should have already executed, or else the test process will be terminated 
+    with an error message. At any other case confusion matrix for the pre-trained functions will be plotted.
 
 
 Additionally the `--help` / `-h` option can always be used as a command option. Calling `python3 main.py --help` outputs

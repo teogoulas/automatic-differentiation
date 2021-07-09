@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from processes import train, test
+from processes import train, test, evaluate
 
 
 def main():
@@ -10,6 +10,7 @@ def main():
 
     train.set_parser(subparsers)
     test.set_parser(subparsers)
+    evaluate.set_parser(subparsers)
 
     args = parser.parse_args()
     if hasattr(args, 'func'):
