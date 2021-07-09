@@ -66,7 +66,7 @@ def train(epoch, models, optimizers, train_loader, device):
             train_losses_circle.append(loss_circle_bin.item())
             train_losses_curve.append(loss_curve_bin.item())
             train_losses_line.append(loss_line_bin.item())
-            train_counter.append((batch_idx * 64) + ((epoch - 1) * len(train_loader.dataset)))
+            train_counter.append((batch_idx * len(X_batch)) + ((epoch - 1) * len(train_loader.dataset)))
             torch.save(circle_model.state_dict(), 'results/custom/circle_model.pth')
             # torch.save(optimizer_circle.state_dict(), 'results/custom/optimizer_circle.pth')
             torch.save(curve_model.state_dict(), 'results/custom/curve_model.pth')

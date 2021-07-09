@@ -15,11 +15,10 @@ Install project dependencies using:
 This application can be used as a command-line application using `main.py`. Command line script works with an ‘command’ 
 specifying the two available modes:
 * `python3 main.py train`: activates the training process, when the functions are retrained using the configuration 
-defined by the user. Four arguments are defined for the `train` command:  
+defined by the user. Three arguments are defined for the `train` command:  
     1. `-e`/ `--epochs`: The number of training epochs (default value: 20).
     2. `-lr`: Learning rate (default value: 0.001).
     3. `-b`/ `--batch`: The batch size (default value: 64).
-    4. `-m`/ `--momentum`: The training momentum (default value: 0.5).
 
     After training completed the models-functions will be saved at `./results/custom` directory for further usage.
     

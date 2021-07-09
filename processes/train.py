@@ -1,6 +1,6 @@
 # PyTorch libraries and modules
 import torch
-from torch.optim import SGD
+from torch.optim import Adam
 from torch.utils.data import Dataset
 
 # torchvision for pre-trained models
@@ -9,8 +9,8 @@ from torchvision import datasets, transforms
 # custom libraries
 from models.CnnModel import BinaryCnnModel
 from utils.clfUtils import test, train
-from utils.imageUtils import view_classify, plot_samples, classify_image, plot_training_curve
-from utils.constants import RANDOM_SEED, N_EPOCHS, LEARNING_RATE, MOMENTUM, BATCH_SIZE_TRAIN
+from utils.imageUtils import plot_samples, classify_image, plot_training_curve
+from utils.constants import RANDOM_SEED, N_EPOCHS, LEARNING_RATE, BATCH_SIZE_TRAIN
 
 
 def set_parser(subparsers):
@@ -37,14 +37,6 @@ def set_parser(subparsers):
         "--batch",
         type=int,
         default=BATCH_SIZE_TRAIN,
-        help="Batch size",
-    )
-
-    parser.add_argument(
-        "-m",
-        "--momentum",
-        type=int,
-        default=MOMENTUM,
         help="Batch size",
     )
 
@@ -81,9 +73,9 @@ def run_train(args):
 
     # set loss & optimizer functions
     optimizers = {
-        'optimizer_circle': SGD(circle_model.parameters(), lr=args.lr, momentum=args.momentum),
-        'optimizer_curve': SGD(curve_model.parameters(), lr=args.lr, momentum=args.momentum),
-        'optimizer_line': SGD(line_model.parameters(), lr=args.lr, momentum=args.momentum)
+        'optimizer_circle': Adam(circle_model.parameters(), lr=args.lr),
+        'optimizer_curve': Adam(curve_model.parameters(), lr=args.lr),
+        'optimizer_line': Adam(line_model.parameters(), lr=args.lr)
     }
 
     # store accuracy and loss per epoch
