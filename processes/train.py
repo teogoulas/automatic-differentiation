@@ -27,7 +27,7 @@ def set_parser(subparsers):
 
     parser.add_argument(
         "-lr",
-        type=int,
+        type=float,
         default=LEARNING_RATE,
         help="Learning rate",
     )
