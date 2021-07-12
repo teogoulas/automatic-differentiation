@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from torchvision import datasets, transforms
 
 # custom libraries
-from models.CnnModel import BinaryCnnModel
+from models.EndToEndModel import EndToEndModel
 from utils.clfUtils import test, train
 from utils.imageUtils import plot_samples, classify_image, plot_training_curve
 from utils.constants import RANDOM_SEED, N_EPOCHS, LEARNING_RATE, BATCH_SIZE_TRAIN
@@ -62,57 +62,32 @@ def run_train(args):
     plot_samples(train_loader)
 
     # initialize the model
-    circle_model = BinaryCnnModel().to(device)
-    curve_model = BinaryCnnModel().to(device)
-    line_model = BinaryCnnModel().to(device)
-    models = {
-        'circle_model': circle_model,
-        'curve_model': curve_model,
-        'line_model': curve_model
-    }
+    model = EndToEndModel().to(device)
 
     # set loss & optimizer functions
-    optimizers = {
-        'optimizer_circle': Adam(circle_model.parameters(), lr=args.lr),
-        'optimizer_curve': Adam(curve_model.parameters(), lr=args.lr),
-        'optimizer_line': Adam(line_model.parameters(), lr=args.lr)
-    }
+    optimizer = Adam(model.parameters(), lr=args.lr)
 
     # store accuracy and loss per epoch
-    train_losses_circle = []
-    train_losses_curve = []
-    train_losses_line = []
+    train_losses = []
     train_counter = []
-    test_losses_circle = []
-    test_losses_curve = []
-    test_losses_line = []
+    test_losses = []
     test_counter = [i * len(train_loader.dataset) for i in range(args.e__epochs + 1)]
 
-    test_loss_circle, test_loss_curve, test_loss_line = test(models, test_loader, device)
-    test_losses_circle.append(test_loss_circle)
-    test_losses_curve.append(test_loss_curve)
-    test_losses_line.append(test_loss_line)
+    test_loss = test(model, test_loader, device, args.batch)
+    test_losses.append(test_loss)
     for epoch in range(1, args.e__epochs + 1):
-        epoch_losses_circle, epoch_losses_curve, epoch_losses_line, epoch_counter = train(epoch, models, optimizers,
-                                                                                          train_loader, device)
-        train_losses_circle += epoch_losses_circle
-        train_losses_curve += epoch_losses_curve
-        train_losses_line += epoch_losses_line
+        epoch_losses, epoch_counter = train(epoch, model, optimizer, train_loader, device)
+        train_losses += epoch_losses
         train_counter += epoch_counter
-        test_loss_circle, test_loss_curve, test_loss_line = test(models, test_loader, device)
-        test_losses_circle.append(test_loss_circle)
-        test_losses_curve.append(test_loss_curve)
-        test_losses_line.append(test_loss_line)
 
-    torch.save(circle_model.state_dict(), 'results/custom/circle_model.pth')
-    torch.save(curve_model.state_dict(), 'results/custom/curve_model.pth')
-    torch.save(line_model.state_dict(), 'results/custom/line_model.pth')
+        test_loss = test(model, test_loader, device, args.batch)
+        test_losses.append(test_loss)
 
-    plot_training_curve(train_counter, train_losses_circle, test_counter, test_losses_circle, "Circle")
-    plot_training_curve(train_counter, train_losses_curve, test_counter, test_losses_curve, "Curve")
-    plot_training_curve(train_counter, train_losses_line, test_counter, test_losses_line, "Line")
+    torch.save(model.state_dict(), 'results/custom/model.pth')
+
+    plot_training_curve(train_counter, train_losses, test_counter, test_losses, "")
 
     images, labels = next(iter(test_loader))
 
     img = images[0][None, :, :, :].to(device)
-    classify_image(img, circle_model, curve_model, line_model)
+    classify_image(img, model.circle, model.curve, model.line)
