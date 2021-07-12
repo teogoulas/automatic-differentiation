@@ -1,9 +1,9 @@
-from torch.nn import Linear, ReLU, Sequential, Conv2d, MaxPool2d, Module, Sigmoid, Flatten
+from torch.nn import Linear, ReLU, Sequential, Conv2d, MaxPool2d, Module, Softmax, Flatten
 
 
-class BinaryCnnModel(Module):
+class CnnModel(Module):
     def __init__(self):
-        super(BinaryCnnModel, self).__init__()
+        super(CnnModel, self).__init__()
         self.model = Sequential(
             Conv2d(
                 in_channels=1,
@@ -24,8 +24,8 @@ class BinaryCnnModel(Module):
             ReLU(),
             MaxPool2d(2),
             Flatten(),
-            Linear(32 * 7 * 7, 1),
-            Sigmoid()
+            Linear(32 * 7 * 7, 4),
+            Softmax(dim=1)
         )
 
     def forward(self, x):
